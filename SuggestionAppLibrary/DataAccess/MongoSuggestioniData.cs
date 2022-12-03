@@ -4,7 +4,7 @@ using ZstdSharp.Unsafe;
 
 namespace SuggestionAppLibrary.DataAccess
 {
-    public class MongoSuggestioniData
+    public class MongoSuggestioniData : ISuggestioniData
     {
         private readonly IDbConnection _db;
         private readonly IUserData _userData;
@@ -23,7 +23,7 @@ namespace SuggestionAppLibrary.DataAccess
         public async Task<List<SuggestionModel>> GetAllSuggestionsAsync()
         {
             var output = _cache.Get<List<SuggestionModel>>(CacheName);
-            if(output is null) 
+            if (output is null)
             {
                 var results = await _suggestions.FindAsync(s => s.Archived == false);
                 output = results.ToList();
@@ -48,8 +48,8 @@ namespace SuggestionAppLibrary.DataAccess
         public async Task<List<SuggestionModel>> GetAllSuggestionsWaitingForApprovalAsync()
         {
             var output = await GetAllSuggestionsAsync();
-            return output.Where(x => 
-                x.ApprovedForRelease == false && 
+            return output.Where(x =>
+                x.ApprovedForRelease == false &&
                 x.Rejected == false)
                 .ToList();
         }
@@ -72,7 +72,7 @@ namespace SuggestionAppLibrary.DataAccess
                 var suggestionsInTransaction = db.GetCollection<SuggestionModel>(_db.SuggestionCollectionName);
                 var suggestion = (await suggestionsInTransaction.FindAsync(s => s.Id.Equals(suggestionId))).First();
                 bool isUpvote = suggestion.UserVotes.Add(userId);
-                if (!isUpvote) 
+                if (!isUpvote)
                 {
                     suggestion.UserVotes.Remove(userId);
                 }
@@ -81,7 +81,7 @@ namespace SuggestionAppLibrary.DataAccess
                 var usersInTransaction = db.GetCollection<UserModel>(_db.UserCollectionName);
                 var user = await _userData.GetUserAsync(suggestion.Author.Id);
 
-                if(isUpvote)
+                if (isUpvote)
                 {
                     user.VotedOnSuggestions.Add(new BasicSuggestionModel(suggestion));
                 }
@@ -90,9 +90,36 @@ namespace SuggestionAppLibrary.DataAccess
                     var suggestionToRemove = user.VotedOnSuggestions.Where(s => s.Id == suggestionId).First();
                     user.VotedOnSuggestions.Remove(suggestionToRemove);
                 }
-                await usersInTransaction.ReplaceOneAsync(u => u.Id== userId, user);
+                await usersInTransaction.ReplaceOneAsync(u => u.Id == userId, user);
                 await session.CommitTransactionAsync();
                 _cache.Remove(CacheName);
+            }
+            catch (Exception)
+            {
+                await session.AbortTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task CreateSuggestionAsync(SuggestionModel suggestion)
+        {
+            var client = _db.Client;
+
+            using var session = await client.StartSessionAsync();
+            session.StartTransaction();
+
+            try
+            {
+                var db = client.GetDatabase(_db.DbName);
+                var suggestionsInTransaction = db.GetCollection<SuggestionModel>(_db.SuggestionCollectionName);
+                await suggestionsInTransaction.InsertOneAsync(suggestion);
+
+                var usersInTransaction = db.GetCollection<UserModel>(_db.UserCollectionName);
+                var user = await _userData.GetUserAsync(suggestion.Author.Id);
+                user.AuthoredSuggestions.Add(new BasicSuggestionModel(suggestion));
+                await usersInTransaction.ReplaceOneAsync(u => u.Id == user.Id, user);
+
+                await session.CommitTransactionAsync();
             }
             catch (Exception)
             {

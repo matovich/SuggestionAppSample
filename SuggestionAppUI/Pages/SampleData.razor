@@ -1,0 +1,81 @@
+﻿@page "/SampleData"
+@inject ICategoryData categoryData
+@inject IStatusData statusData
+
+<h3>Sample Data</h3>
+
+@if (categoriesCreated)
+{
+    <h4>Categories have been created</h4>
+}
+else
+{
+    <button class="btn btn-primary" @onclick="CreateCategories">Create Categories</button>
+}
+
+@if (statusesCreated)
+{
+    <h4>Statuses have been created</h4>
+}
+else
+{
+    <button class="btn btn-primary" @onclick="CreateStatuses">Create Statuses</button>
+}
+
+@code {
+    bool categoriesCreated = false;
+    bool statusesCreated = false;
+
+    private async Task CreateCategories()
+    {
+        var categories = await categoryData.GetAllCategoriesAsync();
+        if (categories?.Count > 0)
+        {
+            return;
+        }
+
+        await CreateCategory("Courses", "Full paid courses.");
+        await CreateCategory("Dev Questions", "Advice on being a developer.");
+        await CreateCategory("In-Depth Tutorial", "A deep-dive video on how to use a topic.");
+        await CreateCategory("10-Minute Training", "A quick \"How do I use this?\" video.");
+        await CreateCategory("Other", "Not sure which category this fits in.");
+
+        categoriesCreated = true;
+    }
+
+    private async Task CreateCategory(string name, string description)
+    {
+        CategoryModel cat = new()
+            {
+                CategoryName = name,
+                CategoryDescription = description
+            };
+        await categoryData.CreateCategoryAsync(cat);
+    }
+
+    private async Task CreateStatuses()
+    {
+        var statuses = await statusData.GetAllStatusesAsync();
+        if (statuses?.Count > 0)
+        {
+            return;
+        }
+
+        await CreateStatus("Completed", "The suggestion was accepted and the corresponding item was created.");
+        await CreateStatus("Watching", "The suggestion is interesting. We are watching to see how much interest there is.");
+        await CreateStatus("Upcoming", "The suggestion was accepted and will be released soon.");
+        await CreateStatus("Dismissed", "The suggestion was not something that we are going to undertake.");
+
+        statusesCreated = true;
+    }
+
+    private async Task CreateStatus(string name, string description)
+    {
+        StatusModel stat = new()
+            {
+                StatusName = name,
+                StatusDescription = description
+            };
+        await statusData.CreatStatusAsync(stat);
+    }
+}
