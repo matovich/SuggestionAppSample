@@ -1,8 +1,10 @@
 ﻿@page "/SampleData"
 @inject ICategoryData categoryData
 @inject IStatusData statusData
+@inject IUserData userData
+@inject ISuggestioniData suggestionData
 
-<h3>Sample Data</h3>
+<h3>Load Sample Data</h3>
 
 @if (categoriesCreated)
 {
@@ -22,9 +24,121 @@ else
     <button class="btn btn-primary" @onclick="CreateStatuses">Create Statuses</button>
 }
 
+@if (statusesCreated)
+{
+    <h4>Sample data has been created</h4>
+}
+else
+{
+    <button class="btn btn-danger" @onclick="GenerateSampleData">Generate Sample Data</button>
+}
+
 @code {
     bool categoriesCreated = false;
     bool statusesCreated = false;
+    bool sampleDataCreated = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var categories = await categoryData.GetAllCategoriesAsync();
+        if (categories?.Count > 0)
+        {
+            categoriesCreated = true;
+        }
+
+        var statuses = await statusData.GetAllStatusesAsync();
+        if (statuses?.Count > 0)
+        {
+            statusesCreated = true;
+        }
+
+        var user = await userData.GetUserFromAuthenticationAsync("abc-123");
+        if(user != null)
+        {
+            sampleDataCreated = true;
+        }
+        await base.OnInitializedAsync();
+    }
+
+    private async Task GenerateSampleData()
+    {
+        UserModel user = new()
+            {
+                FirstName = "Tim",
+                LastName = "Corey",
+                EmailAddress = "tim@test.com",
+                DisplayName = "Sample Tim Corey",
+                ObjectIdentifier = "abc-123"
+            };
+        await userData.CreateUserAsync(user);
+
+        var foundUser = await userData.GetUserFromAuthenticationAsync("abc-123");
+        var categories = await categoryData.GetAllCategoriesAsync();
+        var statuses = await statusData.GetAllStatusesAsync();
+        HashSet<string> votes = new();
+        votes.Add("1");
+        votes.Add("2");
+        votes.Add("3");
+
+        SuggestionModel suggestion = new()
+            {
+                Author = new BasicUserModel(foundUser),
+                Category = categories[0],
+                Suggestion = "Our First Suggestion",
+                ApprovedForRelease = true,
+                Description = "This is a suggestion created by the sample data generation method"
+            };
+        await suggestionData.CreateSuggestionAsync(suggestion);
+        suggestion = new()
+            {
+                Author = new BasicUserModel(foundUser),
+                Category = categories[1],
+                Suggestion = "Our Second Suggestion",
+                Description = "This is a suggestion created by the sample data generation method",
+                SuggestionStatus = statuses[0],
+                ApprovedForRelease = true,
+                OwnerNotes = "This is the note for the status."
+            };
+        await suggestionData.CreateSuggestionAsync(suggestion);
+        suggestion = new()
+            {
+                Author = new BasicUserModel(foundUser),
+                Category = categories[2],
+                Suggestion = "Our Third Suggestion",
+                Description = "This is a suggestion created by the sample data generation method",
+                SuggestionStatus = statuses[1],
+                ApprovedForRelease = true,
+                OwnerNotes = "This is the note for the status."
+            };
+        await suggestionData.CreateSuggestionAsync(suggestion);
+        suggestion = new()
+            {
+                Author = new BasicUserModel(foundUser),
+                Category = categories[3],
+                Suggestion = "Our Fourth Suggestion",
+                Description = "This is a suggestion created by the sample data generation method",
+                SuggestionStatus = statuses[2],
+                ApprovedForRelease = true,
+                UserVotes = votes,
+                OwnerNotes = "This is the note for the status."
+            };
+        await suggestionData.CreateSuggestionAsync(suggestion);
+        votes.Add("4");
+        suggestion = new()
+            {
+                Author = new BasicUserModel(foundUser),
+                Category = categories[4],
+                Suggestion = "Our Fifth Suggestion",
+                Description = "This is a suggestion created by the sample data generation method",
+                SuggestionStatus = statuses[3],
+                ApprovedForRelease = true,
+                UserVotes = votes,
+                OwnerNotes = "This is the note for the status."
+            };
+        await suggestionData.CreateSuggestionAsync(suggestion);
+
+        sampleDataCreated = true;
+    }
 
     private async Task CreateCategories()
     {
