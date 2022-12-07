@@ -1,7 +1,10 @@
 ﻿@page "/Profile"
+@attribute [Authorize]
+
 @inject ISuggestioniData suggestionData
 @inject IUserData userData
 @inject NavigationManager navManager
+@inject AuthenticationStateProvider authProvider
 
 <h1>My Profile</h1>
 
@@ -14,7 +17,7 @@
 <div>
     <h2>My Account</h2>
     <p>
-        <a href="#">
+        <a href="MIcrosoftIdentity/Account/EditProfile">
             Edit My Profile
         </a>
     </p>
@@ -189,8 +192,9 @@
 
     protected async override Task OnInitializedAsync()
     {
-        //ToDo:  temp until we add authentication.
-        loggedInUser = await userData.GetUserFromAuthenticationAsync("abc-123");
+        var authState = await authProvider.GetAuthenticationStateAsync();
+        var objectId = authState.User.Claims.FirstOrDefault(c => c.Type.Contains("objectidentifier"))?.Value;
+        loggedInUser = await userData.GetUserFromAuthenticationAsync(objectId);
 
         var results = await suggestionData.GetUsersSuggestionsAsync(loggedInUser.Id);
         if (loggedInUser is not null && results is not null)
