@@ -89,9 +89,9 @@ namespace SuggestionAppLibrary.DataAccess
                     suggestion.UserVotes.Remove(userId);
                 }
 
-                await suggestionsInTransaction.ReplaceOneAsync(s => s.Id == suggestionId, suggestion);
+                await suggestionsInTransaction.ReplaceOneAsync(session, s => s.Id == suggestionId, suggestion);
                 var usersInTransaction = db.GetCollection<UserModel>(_db.UserCollectionName);
-                var user = await _userData.GetUserAsync(suggestion.Author.Id);
+                var user = await _userData.GetUserAsync(userId);
 
                 if (isUpvote)
                 {
@@ -99,10 +99,11 @@ namespace SuggestionAppLibrary.DataAccess
                 }
                 else
                 {
-                    var suggestionToRemove = user.VotedOnSuggestions.Where(s => s.Id == suggestionId).First();
-                    user.VotedOnSuggestions.Remove(suggestionToRemove);
+                    var suggestionToRemove = user.VotedOnSuggestions.Where(s => s.Id == suggestionId).FirstOrDefault();
+                    if (suggestionToRemove != null)
+                        user.VotedOnSuggestions.Remove(suggestionToRemove);
                 }
-                await usersInTransaction.ReplaceOneAsync(u => u.Id == userId, user);
+                await usersInTransaction.ReplaceOneAsync(session, u => u.Id == userId, user);
                 await session.CommitTransactionAsync();
                 _cache.Remove(CacheName);
             }
@@ -124,12 +125,12 @@ namespace SuggestionAppLibrary.DataAccess
             {
                 var db = client.GetDatabase(_db.DbName);
                 var suggestionsInTransaction = db.GetCollection<SuggestionModel>(_db.SuggestionCollectionName);
-                await suggestionsInTransaction.InsertOneAsync(suggestion);
+                await suggestionsInTransaction.InsertOneAsync(session, suggestion);
 
                 var usersInTransaction = db.GetCollection<UserModel>(_db.UserCollectionName);
                 var user = await _userData.GetUserAsync(suggestion.Author.Id);
                 user.AuthoredSuggestions.Add(new BasicSuggestionModel(suggestion));
-                await usersInTransaction.ReplaceOneAsync(u => u.Id == user.Id, user);
+                await usersInTransaction.ReplaceOneAsync(session, u => u.Id == user.Id, user);
 
                 await session.CommitTransactionAsync();
             }

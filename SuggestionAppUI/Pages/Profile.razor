@@ -1,6 +1,7 @@
 ﻿@page "/Profile"
 @attribute [Authorize]
 
+@inject AuthenticationStateProvider authProvider
 @inject ISuggestioniData suggestionData
 @inject IUserData userData
 @inject NavigationManager navManager
@@ -192,9 +193,7 @@
 
     protected async override Task OnInitializedAsync()
     {
-        var authState = await authProvider.GetAuthenticationStateAsync();
-        var objectId = authState.User.Claims.FirstOrDefault(c => c.Type.Contains("objectidentifier"))?.Value;
-        loggedInUser = await userData.GetUserFromAuthenticationAsync(objectId);
+        loggedInUser = await authProvider.GetUserFromAuth(userData);
 
         var results = await suggestionData.GetUsersSuggestionsAsync(loggedInUser.Id);
         if (loggedInUser is not null && results is not null)
