@@ -2,6 +2,22 @@
 
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 18px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 900;
+    color: #FFFFFF;
+}
+
+body {
+    background: url(../Images/BackGround.png) no-repeat center center fixed;
+    background-size: cover;
+    height: 100%;
+}
+
+h1 {
+    padding-top: 1rem;
 }
 
 h1:focus {
