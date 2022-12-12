@@ -561,9 +561,9 @@ a, .btn-link {
     padding-right: 1rem;
 }
 
-.submission-edit-icon:hover {
-    color: #39BAD8;
-}
+    .submission-edit-icon:hover {
+        color: #39BAD8;
+    }
 
 .my-submission-heading {
     color: #000000;
@@ -579,4 +579,54 @@ a, .btn-link {
     color: #A9A9A9;
     height: 2px;
     opacity: 1;
+}
+
+.suggestion-entry-bottom {
+    display: flex;
+}
+
+.btn-archive {
+    border: 0;
+    background-color: #FFFFFF;
+    padding-top: 0 10px;
+    flex: unset;
+}
+
+.btn-archive-confirm,
+.btn-archive-reject {
+    text-transform: uppercase;
+    color: darkgray;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex: 1;
+}
+
+.btn-archive-confirm {
+    color: #D9354C;
+}
+
+.admin-details {
+    margin-top: 20px;
+}
+
+.admin-set-statuses {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+}
+
+.btn-status-completed:hover {
+    color: #B5D43A;
+}
+
+.btn-status-watching:hover {
+    color: #E9354C;
+}
+
+.btn-status-upcoming:hover {
+    color: #835581;
+}
+
+.btn-status-dismissed:hover {
+    color: #F9C30B;
 }
